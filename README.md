@@ -123,4 +123,4 @@ MIT License
 
 ---
 
-如有问题或建议，请提交 [Issue](https://github.com/your-repo/electron-camera/issues)。
+如有问题或建议，请提交 [Issue](https://github.com/zhangyu-521/electron-camera/issues)。
