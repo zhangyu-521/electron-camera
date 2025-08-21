@@ -1,0 +1,22 @@
+html,
+body {
+  height: 100%;
+  width: 100%;
+  /* 窗口可拖动 */
+  -webkit-app-region: drag;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
