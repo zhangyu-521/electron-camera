@@ -26,6 +26,12 @@ const api = {
     ipcRenderer.on('window-config', (_, config) => {
       callback(config)
     })
+  },
+
+  onVideoFilter: (callback: () => void) => {
+    ipcRenderer.on('toggle-filetr', () => {
+      callback()
+    })
   }
 }
 

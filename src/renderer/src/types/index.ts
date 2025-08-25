@@ -3,4 +3,5 @@ export interface SettingsOptions {
   alwaysOnTop: boolean
   rounded: number
   winSize: number
+  keyBlur: string
 }

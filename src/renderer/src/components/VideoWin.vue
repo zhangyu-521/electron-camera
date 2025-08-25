@@ -27,6 +27,16 @@ onMounted(() => {
     })
   }
 
+  window.api.onVideoFilter(() => {
+    if (video.value) {
+      if (video.value.style.filter) {
+        video.value.style.filter = ''
+      } else {
+        video.value.style.filter = 'blur(50px)'
+      }
+    }
+  })
+
   window.navigator.mediaDevices.getUserMedia({ video: true }).then((stream) => {
     if (video.value) {
       video.value.srcObject = stream

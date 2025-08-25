@@ -6,7 +6,8 @@ const settingsOption = ref<SettingsOptions>({
   windowOpacity: 100,
   alwaysOnTop: true,
   rounded: 50,
-  winSize: 30
+  winSize: 30,
+  keyBlur: 'ctrl+m'
 })
 
 const saveStatus = ref(false)
@@ -40,6 +41,21 @@ const closeSettings = (): void => {
   }
 }
 
+const handlekeyDown = (event: KeyboardEvent): void => {
+  event.preventDefault()
+  if (event.ctrlKey) {
+    settingsOption.value.keyBlur = `ctrl+${event.key}`
+  }
+
+  if (event.shiftKey) {
+    settingsOption.value.keyBlur = `shift+${event.key}`
+  }
+
+  if (event.key) {
+    settingsOption.value.keyBlur = `ctrl+${event.key}`
+  }
+}
+
 onMounted(() => {
   // 监听窗口配置事件
   if (window.api && window.api.onWindowConfig) {
@@ -70,6 +86,17 @@ onMounted(() => {
         >窗口透明度: {{ settingsOption.windowOpacity }}%</label
       >
       <input v-model="settingsOption.windowOpacity" type="range" min="1" max="100" class="w-full" />
+    </div>
+
+    <div class="setting-item">
+      <label class="block text-sm font-medium mb-2"
+        >模糊键位🚬(保存后生效): {{ settingsOption.keyBlur }}</label
+      >
+      <input
+        v-model="settingsOption.keyBlur"
+        class="w-full border-[#0c2f69] border-[2px]"
+        @keydown="handlekeyDown"
+      />
     </div>
 
     <div class="setting-item">

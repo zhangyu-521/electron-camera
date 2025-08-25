@@ -8,6 +8,7 @@ interface Api {
   saveSettings: (setting: SettingsOptions) => boolean
   onVideoSettings: (callback: (setting: SettingsOptions) => void) => void
   onWindowConfig: (callback: (config: SettingsOptions) => void) => void
+  onVideoFilter: (callback: () => void) => void
 }
 
 declare global {

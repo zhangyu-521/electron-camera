@@ -1,12 +1,31 @@
-import { app, shell, BrowserWindow, Tray, Menu, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, Tray, Menu, ipcMain, globalShortcut } from 'electron'
 import { join } from 'path'
 import fs from 'fs'
 import { electronApp, optimizer, is } from '@electron-toolkit/utils'
 import icon from '../../resources/icon.png?asset'
 
 let settingsWindow: BrowserWindow | null = null
+let videoWindow: BrowserWindow | null = null
 
-function createVideoWindow(): BrowserWindow {
+// 读取配置文件 - 使用用户数据目录而不是应用目录
+const settingsPath = join(app.getPath('userData'), 'settings.json')
+let settings = {
+  windowOpacity: 100,
+  alwaysOnTop: true,
+  rounded: 50,
+  winSize: 30,
+  keyBlur: 'ctrl+m'
+}
+if (fs.existsSync(settingsPath)) {
+  try {
+    const settingsData = fs.readFileSync(settingsPath, 'utf-8')
+    settings = JSON.parse(settingsData)
+  } catch (error) {
+    console.error('读取配置文件失败:', error)
+  }
+}
+
+function createVideoWindow(): void {
   // Create the browser window.
   const mainWindow = new BrowserWindow({
     width: 300,
@@ -40,8 +59,7 @@ function createVideoWindow(): BrowserWindow {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
-
-  return mainWindow
+  videoWindow = mainWindow
 }
 
 function settingWindow(): void {
@@ -102,29 +120,8 @@ function settingWindow(): void {
 }
 
 function sendSettingToWindow(window: BrowserWindow, view?: string): void {
-  // 读取配置文件 - 使用用户数据目录而不是应用目录
-  const settingsPath = join(app.getPath('userData'), 'settings.json')
-  let settings = {
-    windowOpacity: 100,
-    alwaysOnTop: true,
-    rounded: 50,
-    winSize: 30
-  }
-  if (fs.existsSync(settingsPath)) {
-    try {
-      const settingsData = fs.readFileSync(settingsPath, 'utf-8')
-      settings = JSON.parse(settingsData)
-      // 发送配置到渲染进程
-      window.webContents.send('window-config', settings)
-    } catch (error) {
-      console.error('读取配置文件失败:', error)
-      // 发送默认配置
-      window.webContents.send('window-config', settings)
-    }
-  } else {
-    // 发送默认配置
-    window.webContents.send('window-config', settings)
-  }
+  if (!window) return
+  window.webContents.send('window-config', settings)
 
   if (view === 'video') {
     window.setAlwaysOnTop(settings.alwaysOnTop)
@@ -133,32 +130,44 @@ function sendSettingToWindow(window: BrowserWindow, view?: string): void {
 }
 
 app.whenReady().then(() => {
-  electronApp.setAppUserModelId('com.electron')
+  electronApp.setAppUserModelId('com.electronCamera.app')
+
+  globalShortcut.register(settings.keyBlur, () => {
+    if (videoWindow) {
+      videoWindow.webContents.send('toggle-filetr')
+    }
+  })
 
   app.on('browser-window-created', (_, window) => {
     optimizer.watchWindowShortcuts(window)
   })
 
   createTray()
-  const videoWin = createVideoWindow()
+  createVideoWindow()
 
   ipcMain.handle('notice-settings', (_, settings) => {
-    if (!videoWin.isDestroyed()) {
-      videoWin.setAlwaysOnTop(settings.alwaysOnTop)
-      videoWin.setContentSize(1000 * settings.winSize * 0.01, 1000 * settings.winSize * 0.01)
-      videoWin.webContents.send('video-settings', settings)
+    if (!videoWindow?.isDestroyed()) {
+      videoWindow!.setAlwaysOnTop(settings.alwaysOnTop)
+      videoWindow!.setContentSize(1000 * settings.winSize * 0.01, 1000 * settings.winSize * 0.01)
+      videoWindow!.webContents.send('video-settings', settings)
     }
   })
 
-  ipcMain.handle('save-settings', (_, settings) => {
+  ipcMain.handle('save-settings', (_, curretntSettings) => {
+    if (curretntSettings.keyBlur != settings.keyBlur) {
+      globalShortcut.unregister(settings.keyBlur)
+      globalShortcut.register(curretntSettings.keyBlur, () => {
+        if (videoWindow) {
+          videoWindow.webContents.send('toggle-filetr')
+        }
+      })
+    }
     const settingsPath = join(app.getPath('userData'), 'settings.json')
-    fs.writeFileSync(settingsPath, JSON.stringify(settings), { flag: 'w' })
+    fs.writeFileSync(settingsPath, JSON.stringify(curretntSettings), { flag: 'w' })
     return true
   })
 
   app.on('activate', function () {
-    // On macOS it's common to re-create a window in the app when the
-    // dock icon is clicked and there are no other windows open.
     if (BrowserWindow.getAllWindows().length === 0) createVideoWindow()
   })
 })
