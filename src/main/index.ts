@@ -132,6 +132,9 @@ function sendSettingToWindow(window: BrowserWindow, view?: string): void {
 app.whenReady().then(() => {
   electronApp.setAppUserModelId('com.electronCamera.app')
 
+  // 隐藏菜单栏（适用于 Windows 和 Linux）
+  Menu.setApplicationMenu(null)
+
   globalShortcut.register(settings.keyBlur, () => {
     if (videoWindow) {
       videoWindow.webContents.send('toggle-filetr')
